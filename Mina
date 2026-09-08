@@ -1,0 +1,186 @@
+-- =========================================================================
+-- SCRIPT ANTI-DETECCIÓN GLOBAL EN ESPAÑOL: MINA UNA MONTAÑA
+-- =========================================================================
+
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local VirtualUser = game:GetService("VirtualUser")
+local TweenService = game:GetService("TweenService")
+local LocalPlayer = Players.LocalPlayer
+
+-- INTERFAZ VISUAL (GUI) SEGURA
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local UIListLayout = Instance.new("UIListLayout")
+local Titulo = Instance.new("TextLabel")
+
+ScreenGui.Name = "MinaSeguraMenu_" .. tostring(math.random(1000, 9999)) -- Nombre aleatorio para evitar detección por UI Scan
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.ResetOnSpawn = false
+
+MainFrame.Name = "Panel_" .. tostring(math.random(1000, 9999))
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 24, 30)
+MainFrame.BorderSizePixel = 0
+MainFrame.Position = UDim2.new(0.05, 0, 0.2, 0)
+MainFrame.Size = UDim2.new(0, 220, 0, 310)
+MainFrame.Active = true
+MainFrame.Draggable = true
+
+UIListLayout.Parent = MainFrame
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Padding = UDim.new(0, 8)
+
+Titulo.Name = "Titulo"
+Titulo.Parent = MainFrame
+Titulo.Size = UDim2.new(1, 0, 0, 35)
+Titulo.BackgroundColor3 = Color3.fromRGB(30, 35, 45)
+Titulo.Text = "🛡️ MINADO SEGURO V2"
+Titulo.TextColor3 = Color3.fromRGB(0, 200, 255)
+Titulo.TextSize = 13
+Titulo.Font = Enum.Font.SourceSansBold
+
+-- ESTADOS GLOBALES
+_G.AutoMineria = false
+_G.AutoVenta = false
+_G.AntiAFK = true
+
+-- GENERADOR DE TIEMPOS HUMANOS (Evita patrones fijos que detecta el Anti-Cheat)
+local function ObtenerRetrasoHumano(min, max)
+    return math.random(min * 1000, max * 1000) / 1000
+end
+
+local function CrearBotón(texto, colorFondo, accion)
+    local Boton = Instance.new("TextButton")
+    Boton.Parent = MainFrame
+    Boton.Size = UDim2.new(0.9, 0, 0, 35)
+    Boton.BackgroundColor3 = colorFondo
+    Boton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Boton.TextSize = 12
+    Boton.Font = Enum.Font.SourceSansGraphic
+    Boton.Text = texto
+    Boton.AnchorPoint = Vector2.new(0.5, 0)
+    Boton.MouseButton1Click:Connect(accion)
+    return Boton
+end
+
+-- =========================================================================
+-- SISTEMAS PROTEGIDOS (ANTI-BANEO)
+-- =========================================================================
+
+-- 1. Auto-Minar con Intervalos de Fatiga Simulada
+local btnMinar = CrearBotón("⛏️ Minar Automático: NO", Color3.fromRGB(180, 60, 60), function()
+    _G.AutoMineria = not _G.AutoMineria
+end)
+
+task.spawn(function()
+    while true do
+        -- Retraso variable en lugar de un bucle estático rápido de 0.1s
+        task.wait(ObtenerRetrasoHumano(0.25, 0.45)) 
+        
+        if _G.AutoMineria then
+            pcall(function()
+                local char = LocalPlayer.Character
+                local mochila = LocalPlayer.Backpack
+                
+                -- Equipar simulando tiempo de reacción al aparecer
+                local pico = mochila:FindFirstChildOfClass("Tool")
+                if pico then
+                    task.wait(ObtenerRetrasoHumano(0.1, 0.3))
+                    pico.Parent = char
+                end
+                
+                local picoEquipado = char:FindFirstChildOfClass("Tool")
+                if picoEquipado then
+                    picoEquipado:Activate()
+                    -- Agrega pausas aleatorias muy breves imitando el cansancio humano
+                    if math.random(1, 25) == 12 then
+                        task.wait(ObtenerRetrasoHumano(0.6, 1.2))
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+-- 2. Auto-Venta Humanizada por Simulación de Caminata Corta (No Teleport Directo)
+local btnVender = CrearBotón("💰 Auto-Vender: NO", Color3.fromRGB(180, 60, 60), function()
+    _G.AutoVenta = not _G.AutoVenta
+end)
+
+task.spawn(function()
+    while true do
+        -- Escanea la mochila de forma espaciada e impredecible (cada 3 a 6 segundos)
+        task.wait(ObtenerRetrasoHumano(3.0, 6.0))
+        
+        if _G.AutoVenta then
+            pcall(function()
+                local zonaVenta = Workspace:FindFirstChild("SellZone") or Workspace:FindFirstChild("Sell") or Workspace:FindFirstChild("Venta")
+                local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                
+                if zonaVenta and hrp then
+                    -- BYPASS DE TELEPORT SEGURO:
+                    -- Los anti-cheats miden los saltos drásticos de coordenadas en 0 segundos.
+                    -- Usamos TweenService para deslizar suavemente al personaje a velocidad normal/alta
+                    local posOriginal = hrp.CFrame
+                    local distancia = (hrp.Position - zonaVenta.Position).Magnitude
+                    
+                    if distancia > 15 then
+                        -- Simular un viaje rápido pero con trayectoria fluida evaluada por el motor
+                        local tiempoViaje = distancia / 90 -- Velocidad simulada segura
+                        local tweenInfo = TweenInfo.new(tiempoViaje, Enum.EasingStyle.Linear)
+                        local moverIda = TweenService:Create(hrp, tweenInfo, {CFrame = zonaVenta.CFrame})
+                        
+                        moverIda:Play()
+                        moverIda.Completed:Wait()
+                        
+                        task.wait(ObtenerRetrasoHumano(0.8, 1.4)) -- Tiempo esperando que el servidor procese la venta
+                        
+                        -- Regresar paulatinamente al punto de origen
+                        local moverVuelta = TweenService:Create(hrp, tweenInfo, {CFrame = posOriginal})
+                        moverVuelta:Play()
+                        moverVuelta.Completed:Wait()
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+-- 3. Modificador de Velocidad Regulado (Bypass de Control de Red)
+local velocidadActiva = false
+local btnVelocidad = CrearBotón("⚡ Velocidad Regulada: NO", Color3.fromRGB(180, 60, 60), function()
+    pcall(function()
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum then
+            velocidadActiva = not velocidadActiva
+            -- 24 es una velocidad ligeramente superior a la normal (16), ideal para pasar desapercibido
+            hum.WalkSpeed = velocidadActiva and 24 or 16 
+        end
+    end)
+end)
+
+-- 4. Anti-AFK por Input de Simulación Periférica Real
+LocalPlayer.Idled:Connect(function()
+    if _G.AntiAFK then
+        pcall(function()
+            -- En vez de enviar comandos al núcleo de la conexión, simula pequeños movimientos de cámara de un mouse humano
+            VirtualUser:CaptureController()
+            VirtualUser:ClickButton2(Vector2.new(math.random(10, 100), math.random(10, 100)))
+        end)
+    end
+end)
+
+-- BUCLE DE ACTUALIZACIÓN VISUAL DEL PANEL
+task.spawn(function()
+    while task.wait(0.5) do
+        btnMinar.Text = _G.AutoMineria and "⛏️ Minar Automático: SÍ" or "⛏️ Minar Automático: NO"
+        btnMinar.BackgroundColor3 = _G.AutoMineria and Color3.fromRGB(45, 140, 85) or Color3.fromRGB(180, 60, 60)
+        
+        btnVender.Text = _G.AutoVenta and "💰 Auto-Vender: SÍ" or "💰 Auto-Vender: NO"
+        btnVender.BackgroundColor3 = _G.AutoVenta and Color3.fromRGB(45, 140, 85) or Color3.fromRGB(180, 60, 60)
+        
+        btnVelocidad.Text = velocidadActiva and "⚡ Velocidad Regulada: SÍ" or "⚡ Velocidad Regulada: NO"
+        btnVelocidad.BackgroundColor3 = velocidadActiva and Color3.fromRGB(45, 140, 85) or Color3.fromRGB(180, 60, 60)
+    end
+end)
