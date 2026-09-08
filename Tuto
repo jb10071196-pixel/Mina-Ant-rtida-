@@ -1,0 +1,2 @@
+wait("0.2")
+loadstring(game:HttpGet("https://github.com/jb10071196-pixel/Mina-Ant-rtida-/blob/main/Mina"))()
